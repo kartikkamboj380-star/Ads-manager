@@ -135,8 +135,8 @@ class ScreenCaptureForegroundService : Service() {
     }
 
     /** Handle rotation / display changes by resizing the existing VirtualDisplay. */
-    override fun onConfigurationChanged() {
-        super.onConfigurationChanged()
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
         executor.execute {
             val (width, height, densityDpi) = computeMetrics()
             MonitoringController.resizeCapture(width, height, densityDpi)

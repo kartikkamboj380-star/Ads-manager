@@ -105,9 +105,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // When the ViewModel asks for screen capture, launch the consent intent.
+        // LocalContext must be read in the composable scope (not inside the LaunchedEffect
+        // suspend lambda), so capture it here and pass it in.
+        val context = LocalContext.current
         LaunchedEffect(ui.awaitingCapture) {
             if (ui.awaitingCapture) {
-                val context = LocalContext.current
                 val intent = permissionManager.createCaptureIntent(context)
                 projectionLauncher.launch(intent)
             }

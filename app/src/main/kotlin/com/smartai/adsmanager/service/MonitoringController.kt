@@ -95,7 +95,7 @@ object MonitoringController {
         } catch (e: Exception) {
             // Creating the VirtualDisplay can throw IllegalStateException. Report and stop;
             // never let it crash the process.
-            agent.onCaptureFailed("Failed to start screen capture: ${e.message ?: e.javaClass.simpleName}")
+            agent.captureFailed("Failed to start screen capture: ${e.message ?: e.javaClass.simpleName}")
             _error.value = agent.statusFlow.value.lastError
             stopInternal()
             return
@@ -137,7 +137,7 @@ object MonitoringController {
 
     /** The capture pipeline failed to initialize (called by the service on a throw). */
     fun onCaptureFailed(message: String) {
-        agent.onCaptureFailed(message)
+        agent.captureFailed(message)
         _error.value = message
         _running.value = false
     }
