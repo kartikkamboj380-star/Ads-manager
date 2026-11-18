@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        Base theme for the Activity. The actual visual theme (dark, purple accent) is
+        implemented in Compose via Theme.kt. This XML theme only removes the action bar
+        and paints a dark launch window so the transition to Compose is seamless.
+    -->
+    <style name="Theme.SmartAIAdsManager" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- windowLightNavigationBar is API 27+; the app is always dark, so false is intended. -->
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+    </style>
+</resources>

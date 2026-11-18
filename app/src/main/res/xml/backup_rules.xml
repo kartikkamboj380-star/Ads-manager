@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!--
+        Disable cloud backup of sensitive connection data and reward records by default.
+        Users can opt in per the app's privacy settings; nothing sensitive is backed up.
+    -->
+    <exclude domain="sharedpref" path="connections.xml" />
+    <exclude domain="sharedpref" path="settings.xml" />
+    <exclude domain="database" path="smartai_ads.db" />
+</full-backup-content>

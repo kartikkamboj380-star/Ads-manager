@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smart AI Ads Manager</string>
+
+    <!-- Notification channels -->
+    <string name="channel_monitoring_name">Ad Assistance Monitoring</string>
+    <string name="channel_monitoring_desc">Active consented screen monitoring for ad loading assistance</string>
+    <string name="channel_reward_name">Reward Updates</string>
+    <string name="channel_reward_desc">Reward confirmation and history notifications</string>
+
+    <!-- Foreground service notification -->
+    <string name="notification_monitoring_title">Agent running</string>
+    <string name="notification_monitoring_text">Capture active. Monitoring the selected app for the Loading ad control. You stay in control of viewing.</string>
+    <string name="notification_monitoring_stop">Stop Agent</string>
+    <string name="notification_reopen_dashboard">Reopen Dashboard</string>
+
+    <!-- Boot recovery -->
+    <string name="notification_recovery_title">Monitoring was interrupted</string>
+    <string name="notification_recovery_text">A previous ad assistance session did not finish cleanly. Open the app to review and resume.</string>
+
+    <!-- Reward -->
+    <string name="reward_verified">Verified</string>
+    <string name="reward_unverified">Unverified</string>
+</resources>

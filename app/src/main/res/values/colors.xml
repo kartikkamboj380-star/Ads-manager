@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Premium dark palette with a purple accent. -->
+    <color name="background">#0E0B14</color>
+    <color name="surface">#1A1423</color>
+    <color name="surface_variant">#241B30</color>
+    <color name="primary">#9D4EDD</color>
+    <color name="primary_variant">#7B2CBF</color>
+    <color name="accent">#C77DFF</color>
+    <color name="on_background">#E8E3F0</color>
+    <color name="on_surface">#E8E3F0</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="error">#FF6B6B</color>
+    <color name="success">#4ADE80</color>
+    <color name="warning">#FBBF24</color>
+</resources>

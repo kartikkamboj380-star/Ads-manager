@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Network: only used to optionally query an OFFICIAL reward-confirmation API.
+        No credentials are ever collected or transmitted.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        Foreground service + notifications: required to run the explicit, consented
+        screen-monitoring session with a visible, persistent foreground notification.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Restart recovery: re-notify the user if monitoring was interrupted. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
+        Package visibility. The app discovers installed applications through Android's
+        package-visibility mechanism. <queries> grant visibility into launchable apps
+        and apps that handle web content without the broad QUERY_ALL_PACKAGES flag.
+        QUERY_ALL_PACKAGES is declared so that *any* installed app can be discovered
+        and connected (the feature's core purpose). See README for the Play Store
+        distribution caveat and how to switch to a queries-only policy.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <queries>
+        <!-- Launchable applications -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Apps that handle web URLs -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".SmartAiAdsManagerApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher_foreground"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SmartAIAdsManager"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.SmartAIAdsManager"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            Foreground service that performs the *consented* screen monitoring.
+            It only captures the screen the user explicitly granted via MediaProjection
+            consent, runs OCR locally, and never interacts with other apps automatically.
+            The foreground service owns the ongoing capture session, so monitoring
+            continues while the user switches to other applications; the Activity can
+            disconnect/reconnect without destroying the session.
+        -->
+        <service
+            android:name=".service.ScreenCaptureForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection"
+            android:stopWithTask="false" />
+
+        <!-- Restart recovery: re-notify the user if a monitoring session was active. -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
