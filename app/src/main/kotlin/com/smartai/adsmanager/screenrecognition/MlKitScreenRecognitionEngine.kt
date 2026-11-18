@@ -3,7 +3,7 @@ package com.smartai.adsmanager.screenrecognition
 import android.graphics.Bitmap
 import android.graphics.Rect
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextBlock
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.smartai.adsmanager.domain.DetectedElement
@@ -44,9 +44,9 @@ class MlKitScreenRecognitionEngine(
         }
         return try {
             val image = InputImage.fromBitmap(bitmap, 0)
-            val deferred = CompletableDeferred<List<TextBlock>>()
+            val deferred = CompletableDeferred<List<Text.TextBlock>>()
             textRecognition.process(image)
-                .addOnSuccessListener { deferred.complete(it.blocks) }
+                .addOnSuccessListener { deferred.complete(it.textBlocks) }
                 .addOnFailureListener { deferred.completeExceptionally(it) }
 
             // Never block the frame loop indefinitely: a hung recognizer must not stall
@@ -81,7 +81,7 @@ class MlKitScreenRecognitionEngine(
      * Build a rich [ScreenAnalysis] from OCR text blocks: detect elements with bounds,
      * classify the screen, and locate the best-matching Loading ad element.
      */
-    private fun buildAnalysis(blocks: List<TextBlock>, screenWidth: Int, screenHeight: Int): ScreenAnalysis {
+    private fun buildAnalysis(blocks: List<Text.TextBlock>, screenWidth: Int, screenHeight: Int): ScreenAnalysis {
         val elements = blocks.mapNotNull { block ->
             val box = block.boundingBox ?: return@mapNotNull null
             toElement(block.text, box, screenWidth, screenHeight)

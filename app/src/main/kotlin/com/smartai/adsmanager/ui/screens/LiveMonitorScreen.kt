@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -211,7 +210,7 @@ private fun LiveFrameWithOverlay(
                 bitmap = frame.asImageBitmap(),
                 contentDescription = "Live captured screen",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier.fillMaxSize(),
             )
             elements.forEach { el ->
                 val isTarget = el == targetElement
