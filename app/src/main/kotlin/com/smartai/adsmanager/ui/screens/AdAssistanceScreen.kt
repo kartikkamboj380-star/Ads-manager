@@ -121,6 +121,18 @@ fun AdAssistanceScreen(viewModel: MainViewModel) {
                     val confidence = ui.analysis?.confidence ?: 0.0
                     StatusRow("Confidence", "${(confidence * 100).toInt()}%")
 
+                    // Live pipeline diagnostics — show the agent is actually working.
+                    val frames = ui.analysis?.framesProcessed ?: 0
+                    StatusRow("Frames processed", if (frames > 0) frames.toString() else "0")
+                    val ocrOk = ui.analysis?.ocrSucceeded == true
+                    StatusRow(
+                        "OCR",
+                        if (ocrOk) "Reading screen" else if (frames > 0) "Not reading yet" else "Waiting for frames",
+                    )
+                    ui.analysis?.pipelineError?.let {
+                        Text("Pipeline: $it", color = MaterialTheme.colorScheme.error)
+                    }
+
                     val detected = ui.analysis?.detectedOptions ?: emptySet()
                     if (detected.isNotEmpty()) {
                         Text(

@@ -80,4 +80,42 @@ class MiningScreenMatcherTest {
         assertFalse(unrecognized.recognized)
         assertEquals(0.0, unrecognized.confidence, 1e-9)
     }
+
+    @Test
+    fun `recognizes mining screen from general keywords even without exact labels`() {
+        // OCR may only partially read the screen; mining keywords still recognize it.
+        val analysis = matcher.analyze("Bitcoin mining — hashrate and rewards")
+        assertTrue(analysis.recognized)
+        assertEquals("Mining", analysis.matchedScreen)
+        assertFalse(analysis.targetButtonAvailable)
+    }
+
+    @Test
+    fun `watch ad and play ad variants are treated as the Loading ad target`() {
+        assertTrue(matcher.isTargetAvailable("Watch Ad"))
+        assertTrue(matcher.isTargetAvailable("Play ad"))
+        assertTrue(matcher.isTargetAvailable("Loading advertisement"))
+    }
+
+    @Test
+    fun `ocr noise is tolerated (punctuation and extra spaces)`() {
+        assertTrue(matcher.isTargetAvailable("Loading, ad!"))
+        assertTrue(matcher.isTargetAvailable("load   ad"))
+        assertTrue(matcher.isTargetAvailable("LOADING-AD"))
+    }
+
+    @Test
+    fun `loading indicator phrases are not confused with the Loading ad label`() {
+        // "Loading now..." is an indicator, not the ad-loading control.
+        assertTrue(matcher.isLoadingIndicatorVisible("Loading now..."))
+        assertFalse(matcher.isTargetAvailable("Loading now..."))
+    }
+
+    @Test
+    fun `analysis carries pipeline diagnostics defaults`() {
+        val analysis = matcher.analyze("Loading ad")
+        assertEquals(0, analysis.framesProcessed)
+        assertFalse(analysis.ocrSucceeded)
+        assertEquals(null, analysis.pipelineError)
+    }
 }

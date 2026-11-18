@@ -50,6 +50,7 @@ object MonitoringController {
     private var capture: MediaProjectionController? = null
     private var processor: ScreenFrameProcessor? = null
     private var targetAppReported = false
+    private var framesProcessed = 0
 
     val state: LoadingState get() = agent.state
     val isRunning: Boolean get() = _running.value
@@ -74,6 +75,7 @@ object MonitoringController {
         stopInternal()
         agent.reset()
         targetAppReported = false
+        framesProcessed = 0
         _analysis.value = ScreenAnalysis(false, null, emptySet(), false, false, 0L, "Starting capture.")
 
         agent.permissionGranted()
@@ -111,23 +113,26 @@ object MonitoringController {
         frameProcessor.start(
             controller = controller,
             intervalMs = FRAME_INTERVAL_MS,
-            onFrame = { frame ->
-                try {
-                    if (!targetAppReported) {
-                        targetAppReported = true
-                        agent.targetAppDetected()
+                onFrame = { frame ->
+                    try {
+                        if (!targetAppReported) {
+                            targetAppReported = true
+                            agent.targetAppDetected()
+                        }
+                        agent.setLastFrameTime(frameProcessor.lastFrameTimeEpochMs)
+                        framesProcessed++
+                        val analysis = engine.recognizeFromBitmap(frame).copy(
+                            framesProcessed = framesProcessed,
+                        )
+                        _analysis.value = analysis
+                        drive(analysis)
+                        if (agent.state == LoadingState.LOADING) {
+                            agent.tick(analysis.recognizedText)
+                        }
+                    } catch (_: Exception) {
+                        // A single bad frame must never kill the loop or the process.
                     }
-                    agent.setLastFrameTime(frameProcessor.lastFrameTimeEpochMs)
-                    val analysis = engine.recognizeFromBitmap(frame)
-                    _analysis.value = analysis
-                    drive(analysis)
-                    if (agent.state == LoadingState.LOADING) {
-                        agent.tick(analysis.recognizedText)
-                    }
-                } catch (_: Exception) {
-                    // A single bad frame must never kill the loop or the process.
-                }
-            },
+                },
         )
 
         // Capture pipeline is up and producing frames.
@@ -160,6 +165,7 @@ object MonitoringController {
         capture?.stop()
         capture = null
         targetAppReported = false
+        framesProcessed = 0
         _error.value = null
         agent.stop()
     }

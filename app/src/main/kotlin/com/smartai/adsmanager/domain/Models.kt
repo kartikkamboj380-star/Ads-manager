@@ -132,6 +132,13 @@ data class ScreenAnalysis(
      * must never drive a decision; the agent asks the user for help instead.
      */
     val confidence: Double = 0.0,
+    // --- Live pipeline diagnostics (so the UI can show the agent is actually working) ---
+    /** Number of frames the agent has captured/processed so far in this session. */
+    val framesProcessed: Int = 0,
+    /** True when the most recent OCR attempt produced usable text. */
+    val ocrSucceeded: Boolean = false,
+    /** Latest OCR/capture error, if the pipeline is not producing usable frames. */
+    val pipelineError: String? = null,
 )
 
 /** The state of the underlying screen-capture pipeline (independent of the loading flow). */
