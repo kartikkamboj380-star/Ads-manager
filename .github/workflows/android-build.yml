@@ -16,8 +16,6 @@ jobs:
   build:
     name: Build (debug) + tests + lint
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,37 +52,19 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run unit tests
-        run: set -o pipefail && ./gradlew testDebugUnitTest --no-daemon 2>&1 | tee /tmp/test.log
+        run: ./gradlew testDebugUnitTest --no-daemon
 
       - name: Run lint
-        run: ./gradlew lintDebug --no-daemon 2>&1 | tee /tmp/lint.log
+        run: ./gradlew lintDebug --no-daemon
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon 2>&1 | tee /tmp/build.log
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-
-      - name: Collect error report
-        if: failure()
-        run: |
-          {
-            echo "## Build failure report"
-            echo
-            echo "### Unit test / compile errors"
-            grep -E "^e: |error:|FAILED|AssertionError|What went wrong|Unresolved reference|cannot find symbol|> Task .* FAILED|Exception|Caused by|tests completed|[0-9]+ tests" /tmp/test.log 2>/dev/null | head -250
-            echo
-            echo "### tail of test log"
-            tail -120 /tmp/test.log 2>/dev/null
-          } > ci-error-report.md
-          git config user.name "ci-reporter"
-          git config user.email "ci-reporter@users.noreply.github.com"
-          git add ci-error-report.md
-          git commit -m "ci: temporary build error log" || true
-          git push origin HEAD || true
 
   release:
     name: Build release APK
