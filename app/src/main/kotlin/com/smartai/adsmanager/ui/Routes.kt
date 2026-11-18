@@ -5,4 +5,5 @@ object Routes {
     const val APPS = "apps"
     const val ASSISTANCE = "assistance"
     const val REWARDS = "rewards"
+    const val LIVE_MONITOR = "live_monitor"
 }

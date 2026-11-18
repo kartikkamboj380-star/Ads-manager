@@ -1,6 +1,9 @@
 package com.smartai.adsmanager.service
 
+import android.graphics.Bitmap
 import android.media.projection.MediaProjection
+import com.smartai.adsmanager.domain.AgentEvent
+import com.smartai.adsmanager.domain.AgentEventType
 import com.smartai.adsmanager.domain.AssistanceStatus
 import com.smartai.adsmanager.domain.Clock
 import com.smartai.adsmanager.domain.LoadingState
@@ -51,6 +54,18 @@ object MonitoringController {
     private var processor: ScreenFrameProcessor? = null
     private var targetAppReported = false
     private var framesProcessed = 0
+    private var lastFramePublishedAt = 0L
+    private var previousRecognized = false
+    private var previousTargetAvailable = false
+
+    // --- Live monitor outputs ----------------------------------------------------
+    /** Latest captured frame, throttled for the live monitor (updated ~2 fps). */
+    private val _latestFrame = MutableStateFlow<Bitmap?>(null)
+    val latestFrameFlow: StateFlow<Bitmap?> = _latestFrame.asStateFlow()
+
+    /** Rolling activity log of what the agent observed/did (for the live monitor). */
+    private val _events = MutableStateFlow<List<AgentEvent>>(emptyList())
+    val eventsFlow: StateFlow<List<AgentEvent>> = _events.asStateFlow()
 
     val state: LoadingState get() = agent.state
     val isRunning: Boolean get() = _running.value
@@ -76,6 +91,10 @@ object MonitoringController {
         agent.reset()
         targetAppReported = false
         framesProcessed = 0
+        previousRecognized = false
+        previousTargetAvailable = false
+        _events.value = emptyList()
+        _latestFrame.value = null
         _analysis.value = ScreenAnalysis(false, null, emptySet(), false, false, 0L, "Starting capture.")
 
         agent.permissionGranted()
@@ -115,9 +134,18 @@ object MonitoringController {
             intervalMs = FRAME_INTERVAL_MS,
                 onFrame = { frame ->
                     try {
+                        // Publish the frame to the live monitor at a throttled rate (~2 fps)
+                        // so the UI can show what the agent is seeing without heavy recomposition.
+                        val now = clock.now()
+                        if (now - lastFramePublishedAt >= FRAME_PUBLISH_INTERVAL_MS) {
+                            lastFramePublishedAt = now
+                            _latestFrame.value = frame
+                        }
+
                         if (!targetAppReported) {
                             targetAppReported = true
                             agent.targetAppDetected()
+                            log(AgentEventType.DETECTION, "Target app detected; watching for its Mining screen.")
                         }
                         agent.setLastFrameTime(frameProcessor.lastFrameTimeEpochMs)
                         framesProcessed++
@@ -125,6 +153,12 @@ object MonitoringController {
                             framesProcessed = framesProcessed,
                         )
                         _analysis.value = analysis
+
+                        // Log meaningful recognition changes (throttled to avoid spam).
+                        logRecognition(analysis, previousRecognized, previousTargetAvailable)
+                        previousRecognized = analysis.recognized
+                        previousTargetAvailable = analysis.targetButtonAvailable
+
                         drive(analysis)
                         if (agent.state == LoadingState.LOADING) {
                             agent.tick(analysis.recognizedText)
@@ -145,6 +179,7 @@ object MonitoringController {
         agent.captureFailed(message)
         _error.value = message
         _running.value = false
+        log(AgentEventType.ERROR, message)
     }
 
     /** Handle a display size/density change (rotation) by resizing the VirtualDisplay. */
@@ -167,6 +202,7 @@ object MonitoringController {
         targetAppReported = false
         framesProcessed = 0
         _error.value = null
+        _latestFrame.value = null
         agent.stop()
     }
 
@@ -174,6 +210,7 @@ object MonitoringController {
 
     fun userStartedLoading() {
         agent.userStartedLoading()
+        log(AgentEventType.ACTION, "You started loading the ad. I'm watching for a real confirmation signal.")
     }
 
     fun requestRetry() {
@@ -186,6 +223,30 @@ object MonitoringController {
     }
 
     // --- Recognition state driving -------------------------------------------
+
+    /** Append an event to the rolling activity log (capped to the last [MAX_LOG_EVENTS]). */
+    private fun log(type: AgentEventType, message: String) {
+        val entry = AgentEvent(clock.now(), type, message)
+        _events.value = (_events.value + entry).takeLast(MAX_LOG_EVENTS)
+    }
+
+    /** Log recognition state changes (throttled to meaningful transitions only). */
+    private fun logRecognition(analysis: ScreenAnalysis, wasRecognized: Boolean, wasTarget: Boolean) {
+        if (!wasRecognized && analysis.recognized) {
+            log(AgentEventType.DETECTION, "Mining screen detected on the target app.")
+        }
+        if (!wasTarget && analysis.targetButtonAvailable) {
+            val target = analysis.targetElement
+            val where = target?.let { " (around ${it.left},${it.top})" } ?: ""
+            log(AgentEventType.DETECTION, "Loading ad control found$where. You can tap it to load.")
+        }
+        if (wasTarget && !analysis.targetButtonAvailable && analysis.recognized) {
+            log(AgentEventType.INFO, "Loading ad control is not currently visible; continuing to monitor.")
+        }
+        if (!analysis.ocrSucceeded && analysis.pipelineError != null && framesProcessed == 1) {
+            log(AgentEventType.ERROR, analysis.pipelineError)
+        }
+    }
 
     private fun drive(analysis: ScreenAnalysis) {
         when (agent.state) {
@@ -211,4 +272,10 @@ object MonitoringController {
 
     /** Capture/OCR polling cadence. Polling only — never a completion proof. */
     private const val FRAME_INTERVAL_MS = 1200L
+
+    /** How often the live monitor frame preview is refreshed (~2 fps). */
+    private const val FRAME_PUBLISH_INTERVAL_MS = 500L
+
+    /** Maximum number of activity-log entries retained for the live monitor. */
+    private const val MAX_LOG_EVENTS = 60
 }

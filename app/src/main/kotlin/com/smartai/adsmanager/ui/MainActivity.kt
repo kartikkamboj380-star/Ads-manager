@@ -39,6 +39,7 @@ import com.smartai.adsmanager.service.ScreenCapturePermissionManager
 import com.smartai.adsmanager.ui.screens.AdAssistanceScreen
 import com.smartai.adsmanager.ui.screens.AppListScreen
 import com.smartai.adsmanager.ui.screens.DashboardScreen
+import com.smartai.adsmanager.ui.screens.LiveMonitorScreen
 import com.smartai.adsmanager.ui.screens.RewardHistoryScreen
 import com.smartai.adsmanager.ui.theme.SmartAIAdsManagerTheme
 
@@ -168,10 +169,19 @@ class MainActivity : ComponentActivity() {
                     AppListScreen(viewModel = viewModel)
                 }
                 composable(Routes.ASSISTANCE) {
-                    AdAssistanceScreen(viewModel = viewModel)
+                    AdAssistanceScreen(
+                        viewModel = viewModel,
+                        onOpenLiveMonitor = { navController.navigate(Routes.LIVE_MONITOR) },
+                    )
                 }
                 composable(Routes.REWARDS) {
                     RewardHistoryScreen(viewModel = viewModel)
+                }
+                composable(Routes.LIVE_MONITOR) {
+                    LiveMonitorScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                    )
                 }
             }
         }

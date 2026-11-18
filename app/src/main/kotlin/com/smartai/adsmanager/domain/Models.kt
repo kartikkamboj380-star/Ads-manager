@@ -118,6 +118,35 @@ enum class PermissionType {
     POST_NOTIFICATIONS,
 }
 
+/**
+ * A single visually-detected screen element (a text block / button-like region found by
+ * OCR + geometry analysis). Used by the live monitor to show exactly what the agent is
+ * seeing and where elements are located on the screen.
+ *
+ * The agent only *observes* these elements — it never taps them automatically.
+ */
+data class DetectedElement(
+    val text: String,
+    val left: Int,
+    val top: Int,
+    val right: Int,
+    val bottom: Int,
+    /** Heuristic: the element looks like a tappable button (compact, short text). */
+    val isButtonLike: Boolean = false,
+    /** Recognition confidence for this element in [0.0, 1.0]. */
+    val confidence: Double = 0.0,
+)
+
+/** Category of an agent activity-log entry (shown in the live monitor). */
+enum class AgentEventType { INFO, DETECTION, ACTION, GUIDANCE, ERROR }
+
+/** A single entry in the agent's live activity log. */
+data class AgentEvent(
+    val timestampMs: Long,
+    val type: AgentEventType,
+    val message: String,
+)
+
 data class ScreenAnalysis(
     val recognized: Boolean,
     val matchedScreen: String?,
@@ -139,6 +168,13 @@ data class ScreenAnalysis(
     val ocrSucceeded: Boolean = false,
     /** Latest OCR/capture error, if the pipeline is not producing usable frames. */
     val pipelineError: String? = null,
+    // --- Visual element detection (live monitor + smarter recognition) ---
+    /** All text/button-like elements detected on the current frame, with their bounds. */
+    val detectedElements: List<DetectedElement> = emptyList(),
+    /** The best-matching element for the Loading ad control, if detected. */
+    val targetElement: DetectedElement? = null,
+    /** General screen classification label (e.g. "Mining", "Loading", "Unknown"). */
+    val screenClassification: String = "Unknown",
 )
 
 /** The state of the underlying screen-capture pipeline (independent of the loading flow). */

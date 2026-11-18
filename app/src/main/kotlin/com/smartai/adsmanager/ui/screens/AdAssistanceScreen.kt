@@ -60,7 +60,10 @@ private fun formatAgo(epochMs: Long, nowMs: Long): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdAssistanceScreen(viewModel: MainViewModel) {
+fun AdAssistanceScreen(
+    viewModel: MainViewModel,
+    onOpenLiveMonitor: () -> Unit = {},
+) {
     val ui by viewModel.ui.collectAsState()
     var amountText by remember { mutableStateOf("1.0") }
     var nowMs by remember { mutableLongStateOf(0L) }
@@ -242,6 +245,14 @@ fun AdAssistanceScreen(viewModel: MainViewModel) {
                         Text("Stop", modifier = Modifier.padding(start = 8.dp))
                     }
                 }
+            }
+
+            // Live monitor — see exactly what the agent is seeing and doing.
+            OutlinedButton(
+                onClick = onOpenLiveMonitor,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("👁  Live Monitor — see what the agent sees")
             }
 
             // Manual reward confirmation (used when no official integration exists).
